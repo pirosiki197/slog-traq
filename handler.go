@@ -18,6 +18,8 @@ type Option struct {
 	// ChannelID is the destination traQ channel ID where logs will be posted.
 	ChannelID string
 	BotToken  string
+	// OnInternalError is an optional callback called when an internal error occurs.
+	OnInternalError func(err error)
 }
 
 type Handler struct {
@@ -213,7 +215,10 @@ func (h *Handler) flush(b *strings.Builder) {
 	if b.Len() == 0 {
 		return
 	}
-	_ = h.client.send(context.Background(), b.String())
+	err := h.client.send(context.Background(), b.String())
+	if err != nil && h.opt.OnInternalError != nil {
+		h.opt.OnInternalError(err)
+	}
 	b.Reset()
 }
 
